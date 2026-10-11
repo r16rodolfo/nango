@@ -1,10 +1,11 @@
-// Applies the R16 Sync branding on top of the upstream Nango dashboard (packages/webapp).
+// Applies the R16 Sync branding on top of the upstream Nango dashboard (packages/webapp) and the
+// "Secured by" footer of Connect UI (packages/connect-ui).
 // Runs during the Docker build, right before the frontend is built (see Dockerfile).
 // No dependencies. Safe to run more than once.
 //
 // Scope, on purpose:
-//   - Dashboard only. Connect UI (packages/connect-ui) is NOT touched: custom auth branding is an
-//     Enterprise feature of Nango and the free self-hosted edition must keep it as is.
+//   - Connect UI: only the "Secured by" footer logo and link. Its theme and colours stay gated by
+//     Nango's own plan checks (Enterprise feature), which are never patched here.
 //   - LICENSE and copyright notices are never touched (Elastic License 2.0).
 //   - Technical names stay "Nango" (Nango API, Nango CLI, SDK, Nango Connect...), because they name
 //     the real product and APIs.
@@ -17,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 const BRAND = 'R16 Sync';
 const DESCRIPTION = 'R16 Sync - integration hub for R16 products.';
+const BRAND_URL = 'https://r16.com.br';
 
 const brandingDir = dirname(fileURLToPath(import.meta.url));
 const repo = join(brandingDir, '..');
@@ -101,5 +103,20 @@ for (const file of walk(join(webapp, 'src'))) {
     if (changed) titleFiles++;
 }
 console.log(`[branding] page titles updated in ${titleFiles} files`);
+
+// Dashboard label of the Connect UI footer toggle.
+patch(join(webapp, 'src/pages/Environment/Settings/ConnectUISettings/index.tsx'), [
+    ['Show &quot;Secured by Nango&quot;', `Show &quot;Secured by ${BRAND}&quot;`]
+]);
+
+// ---- 4. Connect UI "Secured by" footer: R16 Sync colour logo and link ----
+const connectUi = join(repo, 'packages', 'connect-ui');
+copyFileSync(join(dist, 'connect-ui-src', 'logo.svg'), join(connectUi, 'src', 'svg', 'logo.svg'));
+patch(join(connectUi, 'src', 'components', 'Layout.tsx'), [
+    ['https://www.nango.dev?utm_source=connectui', BRAND_URL],
+    // The logo's dark parts use currentColor: give them the theme's primary text colour.
+    ['className="h-4 w-auto inline-block ml-2"', 'className="h-4 w-auto inline-block ml-2 text-text-primary"']
+]);
+console.log('[branding] replaced Connect UI footer logo and link');
 
 console.log(`[branding] done${warnings ? ` with ${warnings} warning(s)` : ''}`);

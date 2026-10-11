@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
-pub = Path(__file__).resolve().parent.parent / "dist" / "webapp-public"
+pub = Path(__file__).resolve().parent.parent / "generated" / "webapp-public"
 
 for name, src in (("favicon.ico", "favicon-32x32.png"), ("favicon-dark.ico", "favicon-dark-32x32.png")):
     Image.open(pub / src).save(pub / name, sizes=[(16, 16), (32, 32)])

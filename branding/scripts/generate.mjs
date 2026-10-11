@@ -96,4 +96,20 @@ export const LogoInverted = ({ className, ...props }: React.SVGProps<SVGSVGEleme
 mkdirSync(join(out, 'webapp-src'), { recursive: true });
 writeFileSync(join(out, 'webapp-src', 'LogoInverted.tsx'), tsx);
 
+// ---- Connect UI footer logo ("Secured by"), replaces packages/connect-ui/src/svg/logo.svg ----
+// Colour version: the mark and "R16" use currentColor so they follow the Connect UI light/dark theme,
+// "Sync" keeps the brand orange. Explicit fill attributes instead of a <style> block, because the
+// file is inlined as a React component (svgr).
+const colorSvg = src('r16-sync-logo-color.svg');
+const colorViewBox = colorSvg.match(/viewBox="([^"]+)"/)[1];
+const colorPaths = [...colorSvg.matchAll(/<path\s+d="([^"]+)"\s+(class="fil0"|style="fill:#f60[^"]*")\/>/g)].map(([, d, paint]) =>
+    paint.startsWith('class') ? `<path fill="currentColor" d="${d}"/>` : `<path fill="#f60" d="${d}"/>`
+);
+if (colorPaths.length < 2) throw new Error('unexpected structure in r16-sync-logo-color.svg');
+mkdirSync(join(out, 'connect-ui-src'), { recursive: true });
+writeFileSync(
+    join(out, 'connect-ui-src', 'logo.svg'),
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${colorViewBox}" fill="currentColor">${colorPaths.join('')}</svg>\n`
+);
+
 console.log('branding/generated generated');
