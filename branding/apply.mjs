@@ -1,11 +1,12 @@
 // Applies the R16 Sync branding on top of the upstream Nango dashboard (packages/webapp) and the
 // "Secured by" footer of Connect UI (packages/connect-ui).
-// Runs during the Docker build, right before the frontend is built (see Dockerfile).
+// Runs during the Docker build, after the sources are copied and before any build step (see Dockerfile).
 // No dependencies. Safe to run more than once.
 //
 // Scope, on purpose:
-//   - Connect UI: only the "Secured by" footer logo and link. Its theme and colours stay gated by
-//     Nango's own plan checks (Enterprise feature), which are never patched here.
+//   - Connect UI: the "Secured by" footer logo and link, and the default primary colour the product
+//     ships with. Per-environment theme customisation stays gated by Nango's own plan checks
+//     (Enterprise feature), which are never patched here.
 //   - LICENSE and copyright notices are never touched (Elastic License 2.0).
 //   - Technical names stay "Nango" (Nango API, Nango CLI, SDK, Nango Connect...), because they name
 //     the real product and APIs.
@@ -19,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 const BRAND = 'R16 Sync';
 const DESCRIPTION = 'R16 Sync - integration hub for R16 products.';
 const BRAND_URL = 'https://r16.com.br';
+const BRAND_COLOR = '#FF6600';
 
 const brandingDir = dirname(fileURLToPath(import.meta.url));
 const repo = join(brandingDir, '..');
@@ -118,5 +120,15 @@ patch(join(connectUi, 'src', 'components', 'Layout.tsx'), [
     ['className="h-4 w-auto inline-block ml-2"', 'className="h-4 w-auto inline-block ml-2 text-text-primary"']
 ]);
 console.log('[branding] replaced Connect UI footer logo and link');
+
+// ---- 5. Connect UI default primary colour ----
+// Changes the colour the product ships with. Per-environment theme customisation stays an
+// Enterprise feature: canCustomizeConnectUITheme() is not touched, so saved custom colours are
+// still ignored and every environment uses this default.
+patch(join(repo, 'packages', 'shared', 'lib', 'services', 'connect-ui-settings.service.ts'), [
+    [/primary: '#00B2E3'/gi, `primary: '${BRAND_COLOR}'`]
+]);
+patch(join(connectUi, 'src', 'index.css'), [['--color-brand-500: #00b2e3;', `--color-brand-500: ${BRAND_COLOR.toLowerCase()};`]]);
+console.log(`[branding] Connect UI default primary colour set to ${BRAND_COLOR}`);
 
 console.log(`[branding] done${warnings ? ` with ${warnings} warning(s)` : ''}`);

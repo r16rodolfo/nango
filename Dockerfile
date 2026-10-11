@@ -60,15 +60,15 @@ RUN true \
 COPY --from=precompile --chown=node:node tsconfig.docker.json /app/tmp
 COPY . /app/tmp
 
+# R16 Sync: apply branding before any build step, backend included (see branding/README.md)
+RUN node branding/apply.mjs
+
 # Build the backend separately because it can be cached --in the same build for production and staging-- when we change the env vars
 RUN true \
   && npm run ts-build:docker -- --noCheck
 
 # /!\ Do not set NODE_ENV=production before building, it will break some modules
 # ENV NODE_ENV=production
-
-# R16 Sync: apply dashboard branding before building the frontend (see branding/README.md)
-RUN node branding/apply.mjs
 
 # Build the frontend
 # This image can serve Connect UI under a base path, unlike the CDN, so its build keeps the recovery.
