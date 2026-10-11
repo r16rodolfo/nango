@@ -67,6 +67,9 @@ RUN true \
 # /!\ Do not set NODE_ENV=production before building, it will break some modules
 # ENV NODE_ENV=production
 
+# R16 Sync: apply dashboard branding before building the frontend (see branding/README.md)
+RUN node branding/apply.mjs
+
 # Build the frontend
 # This image can serve Connect UI under a base path, unlike the CDN, so its build keeps the recovery.
 RUN true \
